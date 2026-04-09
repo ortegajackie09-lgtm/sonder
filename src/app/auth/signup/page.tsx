@@ -1,15 +1,16 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 
 export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
-  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => { setMounted(true) }, [])
 
   async function handleSignUp() {
     setError('')
@@ -24,8 +25,14 @@ export default function SignUp() {
     })
     if (profileError) { setError(profileError.message); return }
 
-    router.push('/')
+    window.location.replace('/')
   }
+
+  if (!mounted) return (
+    <main style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '400px', margin: '4rem auto' }}>
+      <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '2rem', marginBottom: '2rem' }}>sonder</h1>
+    </main>
+  )
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '400px', margin: '4rem auto' }}>
