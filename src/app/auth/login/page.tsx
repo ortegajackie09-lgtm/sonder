@@ -1,15 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
-
-  useEffect(() => { setMounted(true) }, [])
 
   async function handleLogin() {
     setError('')
@@ -17,12 +14,6 @@ export default function Login() {
     if (loginError) { setError(loginError.message); return }
     window.location.replace('/')
   }
-
-  if (!mounted) return (
-    <main style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '400px', margin: '4rem auto' }}>
-      <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '2rem', marginBottom: '2rem' }}>sonder</h1>
-    </main>
-  )
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '400px', margin: '4rem auto' }}>
