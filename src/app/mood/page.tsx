@@ -9,13 +9,14 @@ export default function Mood() {
   const [searched, setSearched] = useState(false)
   const supabase = createClient()
 
+  const pf = "'Playfair Display', serif"
+  const sans = "'DM Sans', sans-serif"
+  const dark = '#1e2235'
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const q = params.get('q')
-    if (q) {
-      setQuery(q)
-      handleSearchWithQuery(q)
-    }
+    if (q) { setQuery(q); handleSearchWithQuery(q) }
   }, [])
 
   async function handleSearchWithQuery(q: string) {
@@ -47,7 +48,8 @@ export default function Mood() {
             ),
             users (
               display_name,
-              avatar_initials
+              avatar_initials,
+              username
             )
           `)
           .in('user_id', followingIds)
@@ -66,72 +68,69 @@ export default function Mood() {
   }
 
   return (
-    <main style={{ maxWidth: '480px', margin: '0 auto', padding: '2rem 1rem', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
-        <a href="/" style={{ fontSize: '13px', color: '#888', textDecoration: 'none' }}>← back</a>
-        <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '1.75rem', margin: 0 }}>sonder</h1>
+    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
+        <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4' }}>sonder</span>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
+      <div style={{ padding: '2.5rem 5vw' }}>
         <input
           autoFocus
           placeholder="how are you feeling right now?"
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          style={{ width: '100%', padding: '14px 16px', borderRadius: '20px', border: '0.5px solid #e8e4de', fontSize: '14px', background: '#f0ebe4', color: '#1e1c18', outline: 'none' }}
+          style={{ width: '100%', padding: '20px 24px', borderRadius: '14px', border: 'none', fontSize: '20px', fontFamily: pf, fontStyle: 'italic', background: dark, color: '#e8eaf2', outline: 'none', marginBottom: '16px' }}
         />
-      </div>
 
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        {['late night', 'pre-run', 'Sunday slow', 'rainy commute', 'ethereal', 'moody'].map(mood => (
-          <div
-            key={mood}
-            onClick={() => { setQuery(mood); handleSearchWithQuery(mood) }}
-            style={{ background: '#d8dce8', borderRadius: '12px', padding: '4px 12px', fontSize: '12px', color: '#3a3e54', cursor: 'pointer' }}
-          >{mood}</div>
-        ))}
-      </div>
-
-      <button
-        onClick={handleSearch}
-        disabled={loading}
-        style={{ width: '100%', padding: '10px', background: '#1e1c18', color: '#f0ebe4', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', marginBottom: '1.5rem' }}
-      >
-        {loading ? 'searching...' : 'find music'}
-      </button>
-
-      {searched && results.length === 0 && (
-        <div style={{ color: '#aaa', fontSize: '13px', textAlign: 'center', padding: '2rem 0' }}>
-          no matches yet — share more songs with mood notes
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          {['late night', 'pre-run', 'Sunday slow', 'rainy commute', 'ethereal', 'moody'].map(mood => (
+            <div key={mood} onClick={() => { setQuery(mood); handleSearchWithQuery(mood) }}
+              style={{ background: dark, borderRadius: '100px', padding: '10px 20px', fontSize: '15px', color: '#e8eaf2', cursor: 'pointer', fontWeight: 600 }}>{mood}</div>
+          ))}
         </div>
-      )}
 
-      {results.map(share => (
-        <div key={share.id} style={{ border: '0.5px solid #e8e4de', borderRadius: '10px', padding: '12px', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-            {share.songs?.album_art_url ? (
-              <img src={share.songs.album_art_url} style={{ width: '40px', height: '40px', borderRadius: '6px', flexShrink: 0 }} />
-            ) : (
-              <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#d8dce8', flexShrink: 0 }} />
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1e1c18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{share.songs?.title}</div>
-              <div style={{ fontSize: '11px', color: '#888' }}>{share.songs?.artist}</div>
-            </div>
-            {share.songs?.spotify_url && (
-              <a href={share.songs.spotify_url} target="_blank" style={{ fontSize: '10px', color: '#3a3e54', textDecoration: 'none', flexShrink: 0 }}>▶</a>
-            )}
+        <button onClick={handleSearch} disabled={loading}
+          style={{ width: '100%', padding: '14px', background: dark, color: '#f0ebe4', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 600, marginBottom: '2rem' }}>
+          {loading ? 'searching...' : 'find music'}
+        </button>
+
+        {searched && results.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+            <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '20px', color: '#aaa' }}>no matches yet</p>
+            <p style={{ fontSize: '14px', color: '#bbb', marginTop: '8px' }}>share more songs with mood notes</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#d8dce8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 500, color: '#3a3e54', flexShrink: 0 }}>
-              {share.users?.avatar_initials}
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+          {results.map(share => (
+            <div key={share.id} style={{ border: '0.5px solid #dddbd8', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '14px' }}>
+                {share.songs?.album_art_url ? (
+                  <img src={share.songs.album_art_url} style={{ width: '68px', height: '68px', borderRadius: '10px', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: '68px', height: '68px', borderRadius: '10px', background: '#e8eaf2', flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: pf }}>{share.songs?.title}</div>
+                  <div style={{ fontSize: '14px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '3px', fontFamily: pf, fontStyle: 'italic' }}>{share.songs?.artist}</div>
+                </div>
+                {share.songs?.spotify_url && (
+                  <a href={share.songs.spotify_url} target="_blank" style={{ width: '38px', height: '38px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e8eaf2', textDecoration: 'none', fontSize: '13px', flexShrink: 0 }}>▶</a>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '0.5px solid #f0f0ee', paddingTop: '12px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#e8eaf2', flexShrink: 0 }}>
+                  {share.users?.avatar_initials}
+                </div>
+                <a href={`/profile?u=${share.users?.username}`} style={{ fontSize: '14px', color: dark, textDecoration: 'none', fontWeight: 600 }}>{share.users?.display_name}</a>
+                {share.mood_note && <span style={{ fontSize: '13px', color: '#aaa', marginLeft: 'auto', fontFamily: pf, fontStyle: 'italic' }}>{share.mood_note}</span>}
+              </div>
             </div>
-            <span style={{ fontSize: '11px', color: '#888' }}>{share.users?.display_name}</span>
-            {share.mood_note && <span style={{ fontSize: '10px', color: '#bbb', marginLeft: 'auto', fontStyle: 'italic' }}>{share.mood_note}</span>}
-          </div>
+          ))}
         </div>
-      ))}
+      </div>
     </main>
   )
 }

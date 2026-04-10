@@ -10,6 +10,10 @@ export default function Share() {
   const [error, setError] = useState('')
   const supabase = createClient()
 
+  const pf = "'Playfair Display', serif"
+  const sans = "'DM Sans', sans-serif"
+  const dark = '#1e2235'
+
   async function handleShare() {
     setLoading(true)
     setError('')
@@ -60,50 +64,44 @@ export default function Share() {
   }
 
   if (success) return (
-    <main style={{ maxWidth: '480px', margin: '4rem auto', padding: '2rem', fontFamily: 'sans-serif', textAlign: 'center' }}>
-      <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '1.75rem', marginBottom: '1rem' }}>sonder</h1>
-      <p style={{ color: '#3a3e54', marginBottom: '1.5rem' }}>shared.</p>
-      <a href="/" style={{ fontSize: '13px', color: '#888' }}>back home</a>
+    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <a href="/" style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4', textDecoration: 'none' }}>sonder</a>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
+        <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2rem', color: dark }}>shared.</p>
+        <a href="/" style={{ fontSize: '15px', color: '#888' }}>back home</a>
+      </div>
     </main>
   )
 
   return (
-    <main style={{ maxWidth: '480px', margin: '4rem auto', padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '1.75rem', marginBottom: '0.5rem' }}>sonder</h1>
-      <p style={{ fontSize: '13px', color: '#888', marginBottom: '2rem' }}>share a song</p>
-
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#aaa', marginBottom: '6px' }}>spotify link</div>
-        <input
-          placeholder="paste a spotify track URL"
-          value={url}
-          onChange={e => setUrl(e.target.value)}
-          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e8e4de', fontSize: '13px' }}
-        />
+    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
+        <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4' }}>sonder</span>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#aaa', marginBottom: '6px' }}>what's the mood?</div>
-        <input
-          placeholder="describe the moment..."
-          value={mood}
-          onChange={e => setMood(e.target.value)}
-          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e8e4de', fontSize: '13px' }}
-        />
-      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: '520px', padding: '2rem' }}>
+          <h2 style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '1.8rem', color: dark, marginBottom: '2rem', fontWeight: 400 }}>share a song</h2>
 
-      {error && <p style={{ color: 'red', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginBottom: '8px' }}>spotify link</div>
+            <input placeholder="paste a spotify track URL" value={url} onChange={e => setUrl(e.target.value)} style={{ width: '100%', padding: '14px 16px', borderRadius: '10px', border: '0.5px solid #dddbd8', fontSize: '16px', fontFamily: sans, background: '#fff', outline: 'none' }} />
+          </div>
 
-      <button
-        onClick={handleShare}
-        disabled={loading}
-        style={{ width: '100%', padding: '10px', background: '#1e1c18', color: '#f0ebe4', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px' }}
-      >
-        {loading ? 'sharing...' : 'share it'}
-      </button>
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#999', marginBottom: '8px' }}>what's the mood?</div>
+            <input placeholder="describe the moment..." value={mood} onChange={e => setMood(e.target.value)} style={{ width: '100%', padding: '14px 16px', borderRadius: '10px', border: '0.5px solid #dddbd8', fontSize: '16px', fontFamily: pf, fontStyle: 'italic', background: '#fff', outline: 'none' }} />
+          </div>
 
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-        <a href="/" style={{ fontSize: '13px', color: '#888' }}>back home</a>
+          {error && <p style={{ color: '#c0392b', marginBottom: '12px', fontSize: '14px' }}>{error}</p>}
+
+          <button onClick={handleShare} disabled={loading} style={{ width: '100%', padding: '14px', background: dark, color: '#f0ebe4', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '16px', fontFamily: sans, fontWeight: 600 }}>
+            {loading ? 'sharing...' : 'share it'}
+          </button>
+        </div>
       </div>
     </main>
   )

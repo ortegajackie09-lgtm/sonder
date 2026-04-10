@@ -2,123 +2,103 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
-export default function Home() {
-  const [profile, setProfile] = useState<any>(null)
-  const [shares, setShares] = useState<any[]>([])
+export default function Users() {
+  const [users, setUsers] = useState<any[]>([])
+  const [following, setFollowing] = useState<string[]>([])
+  const [currentUser, setCurrentUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+
+  const pf = "'Playfair Display', serif"
+  const sans = "'DM Sans', sans-serif"
+  const dark = '#1e2235'
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/auth/login'; return }
+      setCurrentUser(user)
 
-      const { data: profileData } = await supabase
+      const { data: allUsers } = await supabase
         .from('users')
         .select('*')
-        .eq('id', user.id)
-        .single()
-      setProfile(profileData)
+        .neq('id', user.id)
 
       const { data: followData } = await supabase
         .from('follows')
         .select('following_id')
         .eq('follower_id', user.id)
 
-      const followingIds = followData?.map(f => f.following_id) || []
-
-      const { data: sharesData } = followingIds.length > 0 ? await supabase
-        .from('shares')
-        .select(`
-          id,
-          mood_note,
-          created_at,
-          user_id,
-          songs (
-            title,
-            artist,
-            album,
-            album_art_url,
-            spotify_url
-          ),
-          users (
-            display_name,
-            avatar_initials,
-            username
-          )
-        `)
-        .in('user_id', followingIds)
-        .order('created_at', { ascending: false })
-        .limit(20)
-        : { data: [] }
-
-      setShares(sharesData || [])
+      setUsers(allUsers || [])
+      setFollowing(followData?.map(f => f.following_id) || [])
       setLoading(false)
     }
     load()
   }, [])
 
+  async function toggleFollow(userId: string) {
+    if (!currentUser) return
+    const isFollowing = following.includes(userId)
+
+    if (isFollowing) {
+      await supabase.from('follows').delete()
+        .eq('follower_id', currentUser.id)
+        .eq('following_id', userId)
+      setFollowing(following.filter(id => id !== userId))
+    } else {
+      await supabase.from('follows').insert({
+        follower_id: currentUser.id,
+        following_id: userId
+      })
+      setFollowing([...following, userId])
+    }
+  }
+
   if (loading) return (
-    <div style={{ padding: '3rem 0', fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '2.5rem', color: '#1e1c18' }}>sonder</div>
+    <div style={{ background: dark, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2rem', color: '#f0ebe4' }}>sonder</span>
+    </div>
   )
 
   return (
-    <main style={{ padding: '3rem 0', fontFamily: 'sans-serif' }}>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
-        <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '2.8rem', margin: 0, color: '#1e1c18', letterSpacing: '-0.02em' }}>sonder</h1>
-        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-          <a href="/users" style={{ fontSize: '15px', color: '#888', textDecoration: 'none' }}>find people</a>
-          <a href="/share" style={{ fontSize: '15px', color: '#3a3e54', textDecoration: 'none', fontWeight: 600 }}>+ share</a>
-          <a href={`/profile?u=${profile?.username}`} style={{ fontSize: '15px', color: '#888', textDecoration: 'none' }}>hi, {profile?.display_name}</a>
-        </div>
+    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh' }}>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
+        <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4' }}>sonder</span>
       </div>
 
-      <a href="/mood" style={{ display: 'block', background: '#f0ebe4', borderRadius: '20px', padding: '18px 22px', marginBottom: '14px', color: '#7a7872', fontSize: '16px', textDecoration: 'none' }}>
-        how are you feeling right now?
-      </a>
+      <div style={{ padding: '2.5rem 5vw' }}>
+        <h2 style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '1.8rem', color: dark, marginBottom: '2rem', fontWeight: 400 }}>find people</h2>
 
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
-        {['late night', 'pre-run', 'Sunday slow', 'rainy commute'].map(mood => (
-          <a key={mood} href={`/mood?q=${mood}`} style={{ background: '#d8dce8', borderRadius: '12px', padding: '7px 16px', fontSize: '14px', color: '#3a3e54', textDecoration: 'none' }}>{mood}</a>
-        ))}
-      </div>
-
-      <div style={{ borderTop: '0.5px solid #e8e4de', paddingTop: '1.5rem' }}>
-        <div style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#aaa', marginBottom: '1.25rem' }}>
-          from your people
-        </div>
-
-        {shares.length === 0 ? (
-          <div style={{ color: '#aaa', fontSize: '15px', textAlign: 'center', padding: '4rem 0' }}>
-            <p style={{ marginBottom: '12px' }}>nothing yet</p>
-            <a href="/users" style={{ color: '#3a3e54', fontSize: '15px' }}>find people to follow →</a>
+        {users.length === 0 ? (
+          <div style={{ background: dark, borderRadius: '16px', padding: '4rem 2rem', textAlign: 'center' }}>
+            <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '20px', color: '#e8eaf2' }}>no other users yet — invite someone!</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {shares.map(share => (
-              <div key={share.id} style={{ border: '0.5px solid #e8e4de', borderRadius: '12px', padding: '16px', background: '#fff' }}>
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'center', marginBottom: '10px' }}>
-                  {share.songs?.album_art_url ? (
-                    <img src={share.songs.album_art_url} style={{ width: '56px', height: '56px', borderRadius: '8px', flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: '56px', height: '56px', borderRadius: '8px', background: '#d8dce8', flexShrink: 0 }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '16px', fontWeight: 600, color: '#1e1c18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{share.songs?.title}</div>
-                    <div style={{ fontSize: '13px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '2px' }}>{share.songs?.artist}</div>
-                  </div>
-                  {share.songs?.spotify_url && (
-                    <a href={share.songs.spotify_url} target="_blank" style={{ fontSize: '14px', color: '#3a3e54', textDecoration: 'none', flexShrink: 0 }}>▶</a>
-                  )}
+            {users.map(user => (
+              <div key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 20px', background: '#fff', borderRadius: '14px', border: '0.5px solid #dddbd8' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, color: '#e8eaf2', flexShrink: 0 }}>
+                  {user.avatar_initials}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#d8dce8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 600, color: '#3a3e54', flexShrink: 0 }}>
-                    {share.users?.avatar_initials}
-                  </div>
-                  <a href={`/profile?u=${share.users?.username}`} style={{ fontSize: '13px', color: '#888', textDecoration: 'none' }}>{share.users?.display_name}</a>
-                  {share.mood_note && <span style={{ fontSize: '12px', color: '#bbb', marginLeft: 'auto', fontStyle: 'italic' }}>{share.mood_note}</span>}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '17px', fontWeight: 600, color: dark, fontFamily: pf }}>{user.display_name}</div>
+                  <div style={{ fontSize: '13px', color: '#888' }}>@{user.username}</div>
                 </div>
+                <button onClick={() => toggleFollow(user.id)} style={{
+                  padding: '10px 22px',
+                  borderRadius: '100px',
+                  border: '0.5px solid',
+                  borderColor: following.includes(user.id) ? '#dddbd8' : dark,
+                  background: following.includes(user.id) ? 'transparent' : dark,
+                  color: following.includes(user.id) ? '#888' : '#f0ebe4',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: sans
+                }}>
+                  {following.includes(user.id) ? 'following' : 'follow'}
+                </button>
               </div>
             ))}
           </div>
