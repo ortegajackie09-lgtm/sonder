@@ -68,10 +68,10 @@ export default function Mood() {
   }
 
   return (
-    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
+    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh' }}>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4' }}>sonder</span>
+        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
       </div>
 
       <div style={{ padding: '2.5rem 5vw' }}>

@@ -65,8 +65,9 @@ export default function Share() {
 
   if (success) return (
     <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <a href="/" style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4', textDecoration: 'none' }}>sonder</a>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4' }}>sonder</span>
+        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
         <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2rem', color: dark }}>shared.</p>
@@ -77,9 +78,9 @@ export default function Share() {
 
   return (
     <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', color: '#f0ebe4' }}>sonder</span>
+        <a href="/" style={{ fontSize: '14px', color: '#888890', textDecoration: 'none' }}>← back</a>
       </div>
 
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
