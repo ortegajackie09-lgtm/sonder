@@ -58,67 +58,80 @@ export default function Home() {
     load()
   }, [])
 
+  const pf = "'Playfair Display', serif"
+  const sans = "'DM Sans', sans-serif"
+  const dark = '#1e2235'
+
   if (loading) return (
-    <div style={{ padding: '2rem', fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '1.5rem' }}>sonder</div>
+    <div style={{ background: dark, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '3rem', color: '#f0ebe4' }}>sonder</span>
+    </div>
   )
 
   return (
-    <main style={{ maxWidth: '480px', margin: '0 auto', padding: '2rem 1rem', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontFamily: 'Georgia', fontStyle: 'italic', fontSize: '1.75rem', margin: 0 }}>sonder</h1>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <a href="/users" style={{ fontSize: '13px', color: '#888', textDecoration: 'none' }}>find people</a>
-          <a href="/share" style={{ fontSize: '13px', color: '#3a3e54', textDecoration: 'none' }}>+ share</a>
-          <a href={`/profile?u=${profile?.username}`} style={{ fontSize: '13px', color: '#888', textDecoration: 'none' }}>hi, {profile?.display_name}</a>
+    <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh' }}>
+
+      <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '2.4rem', margin: 0, color: '#f0ebe4' }}>sonder</h1>
+        <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+          <a href="/users" style={{ fontSize: '15px', color: '#888890', textDecoration: 'none' }}>find people</a>
+          <a href="/share" style={{ fontSize: '15px', color: '#f0ebe4', textDecoration: 'none', fontWeight: 600 }}>+ share</a>
+          <a href={`/profile?u=${profile?.username}`} style={{ fontSize: '15px', color: '#888890', textDecoration: 'none' }}>hi, {profile?.display_name}</a>
         </div>
       </div>
 
-      <a href="/mood" style={{ display: 'block', background: '#f0ebe4', borderRadius: '20px', padding: '12px 16px', marginBottom: '12px', color: '#7a7872', fontSize: '13px', textDecoration: 'none' }}>
-        how are you feeling right now?
-      </a>
+      <div style={{ padding: '2.5rem 5vw 0' }}>
 
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        {['late night', 'pre-run', 'Sunday slow', 'rainy commute'].map(mood => (
-          <a key={mood} href={`/mood?q=${mood}`} style={{ background: '#d8dce8', borderRadius: '12px', padding: '4px 12px', fontSize: '12px', color: '#3a3e54', textDecoration: 'none' }}>{mood}</a>
-        ))}
+        <a href="/mood" style={{ display: 'block', background: dark, borderRadius: '16px', padding: '28px 32px', marginBottom: '16px', textDecoration: 'none' }}>
+          <div style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '26px', color: '#e8eaf2', marginBottom: '10px' }}>how are you feeling right now?</div>
+          <div style={{ fontFamily: sans, fontSize: '15px', color: '#8a8fa8', fontWeight: 500 }}>tap to search by mood →</div>
+        </a>
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '3rem' }}>
+          {['late night', 'pre-run', 'Sunday slow', 'rainy commute'].map(mood => (
+            <a key={mood} href={`/mood?q=${mood}`} style={{ background: dark, borderRadius: '100px', padding: '12px 24px', fontSize: '16px', color: '#e8eaf2', textDecoration: 'none', fontFamily: sans, fontWeight: 600 }}>{mood}</a>
+          ))}
+        </div>
       </div>
 
-      <div style={{ borderTop: '0.5px solid #e8e4de', paddingTop: '1rem' }}>
-        <div style={{ fontSize: '10px', fontWeight: 500, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#aaa', marginBottom: '12px' }}>
+      <div style={{ padding: '0 5vw 4rem' }}>
+        <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', marginBottom: '1.25rem' }}>
           from your people
         </div>
 
         {shares.length === 0 ? (
-          <div style={{ color: '#aaa', fontSize: '13px', textAlign: 'center', padding: '2rem 0' }}>
-            <p style={{ marginBottom: '8px' }}>nothing yet</p>
-            <a href="/users" style={{ color: '#3a3e54', fontSize: '13px' }}>find people to follow →</a>
+          <div style={{ background: dark, borderRadius: '16px', padding: '4rem 2rem', textAlign: 'center' }}>
+            <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '22px', color: '#e8eaf2', marginBottom: '16px' }}>nothing yet</p>
+            <a href="/users" style={{ color: '#8a8fa8', fontSize: '15px' }}>find people to follow →</a>
           </div>
         ) : (
-          shares.map(share => (
-            <div key={share.id} style={{ border: '0.5px solid #e8e4de', borderRadius: '10px', padding: '12px', marginBottom: '10px' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                {share.songs?.album_art_url ? (
-                  <img src={share.songs.album_art_url} style={{ width: '40px', height: '40px', borderRadius: '6px', flexShrink: 0 }} />
-                ) : (
-                  <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: '#d8dce8', flexShrink: 0 }} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#1e1c18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{share.songs?.title}</div>
-                  <div style={{ fontSize: '11px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{share.songs?.artist}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+            {shares.map(share => (
+              <div key={share.id} style={{ border: '0.5px solid #dddbd8', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '14px' }}>
+                  {share.songs?.album_art_url ? (
+                    <img src={share.songs.album_art_url} style={{ width: '68px', height: '68px', borderRadius: '10px', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: '68px', height: '68px', borderRadius: '10px', background: '#e8eaf2', flexShrink: 0 }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: pf }}>{share.songs?.title}</div>
+                    <div style={{ fontSize: '14px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '3px', fontFamily: pf, fontStyle: 'italic' }}>{share.songs?.artist}</div>
+                  </div>
+                  {share.songs?.spotify_url && (
+                    <a href={share.songs.spotify_url} target="_blank" style={{ width: '38px', height: '38px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e8eaf2', textDecoration: 'none', fontSize: '13px', flexShrink: 0 }}>▶</a>
+                  )}
                 </div>
-                {share.songs?.spotify_url && (
-                  <a href={share.songs.spotify_url} target="_blank" style={{ fontSize: '10px', color: '#3a3e54', textDecoration: 'none', flexShrink: 0 }}>▶</a>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#d8dce8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 500, color: '#3a3e54', flexShrink: 0 }}>
-                  {share.users?.avatar_initials}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '0.5px solid #f0f0ee', paddingTop: '12px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#e8eaf2', flexShrink: 0 }}>
+                    {share.users?.avatar_initials}
+                  </div>
+                  <a href={`/profile?u=${share.users?.username}`} style={{ fontSize: '14px', color: dark, textDecoration: 'none', fontWeight: 600 }}>{share.users?.display_name}</a>
+                  {share.mood_note && <span style={{ fontSize: '13px', color: '#aaa', marginLeft: 'auto', fontFamily: pf, fontStyle: 'italic' }}>{share.mood_note}</span>}
                 </div>
-                <a href={`/profile?u=${share.users?.username}`} style={{ fontSize: '11px', color: '#888', textDecoration: 'none' }}>{share.users?.display_name}</a>
-                {share.mood_note && <span style={{ fontSize: '10px', color: '#bbb', marginLeft: 'auto', fontStyle: 'italic' }}>{share.mood_note}</span>}
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </main>
