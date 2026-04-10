@@ -33,31 +33,59 @@ export default function Mood() {
 
     const followingIds = followData?.map(f => f.following_id) || []
 
-    const { data: sharesData } = followingIds.length > 0
-      ? await supabase
-          .from('shares')
-          .select(`
-            id,
-            mood_note,
-            created_at,
-            songs (
-              title,
-              artist,
-              album_art_url,
-              spotify_url
-            ),
-            users (
-              display_name,
-              avatar_initials,
-              username
-            )
-          `)
-          .in('user_id', followingIds)
-          .ilike('mood_note', `%${q}%`)
-          .limit(10)
-      : { data: [] }
+    if (followingIds.length === 0) {
+      setResults([])
+      setLoading(false)
+      setSearched(true)
+      return
+    }
 
-    setResults(sharesData || [])
+    const embedRes = await fetch('/api/embed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: q })
+    })
+    const { embedding } = await embedRes.json()
+
+    const { data: matchedShares } = await supabase.rpc('match_shares', {
+      query_embedding: embedding,
+      match_threshold: 0.3,
+      match_count: 10,
+      user_ids: followingIds
+    })
+
+    if (!matchedShares || matchedShares.length === 0) {
+      const { data: fallback } = await supabase
+        .from('shares')
+        .select(`
+          id, mood_note, created_at,
+          songs ( title, artist, album_art_url, spotify_url ),
+          users ( display_name, avatar_initials, username )
+        `)
+        .in('user_id', followingIds)
+        .ilike('mood_note', `%${q}%`)
+        .limit(10)
+      setResults(fallback || [])
+      setLoading(false)
+      setSearched(true)
+      return
+    }
+
+    const shareIds = matchedShares.map((s: any) => s.id)
+    const { data: fullShares } = await supabase
+      .from('shares')
+      .select(`
+        id, mood_note, created_at,
+        songs ( title, artist, album_art_url, spotify_url ),
+        users ( display_name, avatar_initials, username )
+      `)
+      .in('id', shareIds)
+
+    const sorted = shareIds
+      .map((id: string) => fullShares?.find((s: any) => s.id === id))
+      .filter(Boolean)
+
+    setResults(sorted)
     setLoading(false)
     setSearched(true)
   }
@@ -104,7 +132,7 @@ export default function Mood() {
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
-          {results.map(share => (
+          {results.map((share: any) => (
             <div key={share.id} style={{ border: '0.5px solid #dddbd8', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '14px' }}>
                 {share.songs?.album_art_url ? (
