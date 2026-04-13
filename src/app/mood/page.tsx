@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 export default function Mood() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<any[]>([])
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const supabase = createClient()
@@ -22,6 +23,7 @@ export default function Mood() {
   async function handleSearchWithQuery(q: string) {
     setLoading(true)
     setSearched(false)
+    setAiSuggestions([])
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { window.location.href = '/auth/login'; return }
@@ -33,21 +35,29 @@ export default function Mood() {
 
     const followingIds = [...(followData?.map(f => f.following_id) || []), user.id]
 
-    const embedRes = await fetch('/api/embed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: q })
-    })
-    const { embedding } = await embedRes.json()
+    const [embedRes, aiRes] = await Promise.all([
+      fetch('/api/embed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: q })
+      }),
+      fetch('/api/mood-suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mood: q })
+      })
+    ])
 
-    const { data: matchedShares, error: matchError } = await supabase.rpc('match_shares', {
+    const { embedding } = await embedRes.json()
+    const aiData = await aiRes.json()
+    setAiSuggestions(aiData.suggestions || [])
+
+    const { data: matchedShares } = await supabase.rpc('match_shares', {
       query_embedding: embedding,
       match_threshold: 0.3,
       match_count: 10,
       user_ids: followingIds
     })
-
-    console.log('matchedShares:', matchedShares, 'error:', matchError)
 
     if (!matchedShares || matchedShares.length === 0) {
       const { data: fallback } = await supabase
@@ -90,6 +100,25 @@ export default function Mood() {
     handleSearchWithQuery(query)
   }
 
+  const songCard = (song: any, key: string) => (
+    <div key={key} style={{ border: '0.5px solid #dddbd8', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
+      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        {song.album_art_url ? (
+          <img src={song.album_art_url} style={{ width: '68px', height: '68px', borderRadius: '10px', flexShrink: 0 }} />
+        ) : (
+          <div style={{ width: '68px', height: '68px', borderRadius: '10px', background: '#e8eaf2', flexShrink: 0 }} />
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: pf }}>{song.title}</div>
+          <div style={{ fontSize: '14px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '3px', fontFamily: pf, fontStyle: 'italic' }}>{song.artist}</div>
+        </div>
+        {song.spotify_url && (
+          <a href={song.spotify_url} target="_blank" style={{ width: '38px', height: '38px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e8eaf2', textDecoration: 'none', fontSize: '13px', flexShrink: 0 }}>▶</a>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh' }}>
       <div style={{ background: dark, padding: '1.25rem 5vw', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -119,40 +148,54 @@ export default function Mood() {
           {loading ? 'searching...' : 'find music'}
         </button>
 
-        {searched && results.length === 0 && (
+        {results.length > 0 && (
+          <>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>from your network</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px', marginBottom: '2.5rem' }}>
+              {results.map((share: any) => (
+                <div key={share.id} style={{ border: '0.5px solid #dddbd8', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '14px' }}>
+                    {share.songs?.album_art_url ? (
+                      <img src={share.songs.album_art_url} style={{ width: '68px', height: '68px', borderRadius: '10px', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: '68px', height: '68px', borderRadius: '10px', background: '#e8eaf2', flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: pf }}>{share.songs?.title}</div>
+                      <div style={{ fontSize: '14px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '3px', fontFamily: pf, fontStyle: 'italic' }}>{share.songs?.artist}</div>
+                    </div>
+                    {share.songs?.spotify_url && (
+                      <a href={share.songs.spotify_url} target="_blank" style={{ width: '38px', height: '38px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e8eaf2', textDecoration: 'none', fontSize: '13px', flexShrink: 0 }}>▶</a>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '0.5px solid #f0f0ee', paddingTop: '12px' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#e8eaf2', flexShrink: 0 }}>
+                      {share.users?.avatar_initials}
+                    </div>
+                    <a href={`/profile?u=${share.users?.username}`} style={{ fontSize: '14px', color: dark, textDecoration: 'none', fontWeight: 600 }}>{share.users?.display_name}</a>
+                    {share.mood_note && <span style={{ fontSize: '13px', color: '#aaa', marginLeft: 'auto', fontFamily: pf, fontStyle: 'italic' }}>{share.mood_note}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {aiSuggestions.length > 0 && (
+          <>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>suggested for this mood</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+              {aiSuggestions.map((song: any) => songCard(song, song.id))}
+            </div>
+          </>
+        )}
+
+        {searched && results.length === 0 && aiSuggestions.length === 0 && (
           <div style={{ textAlign: 'center', padding: '3rem 0' }}>
             <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '20px', color: '#aaa' }}>no matches yet</p>
             <p style={{ fontSize: '14px', color: '#bbb', marginTop: '8px' }}>share more songs with mood notes</p>
           </div>
         )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
-          {results.map((share: any) => (
-            <div key={share.id} style={{ border: '0.5px solid #dddbd8', borderRadius: '14px', padding: '18px', background: '#ffffff' }}>
-              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '14px' }}>
-                {share.songs?.album_art_url ? (
-                  <img src={share.songs.album_art_url} style={{ width: '68px', height: '68px', borderRadius: '10px', flexShrink: 0 }} />
-                ) : (
-                  <div style={{ width: '68px', height: '68px', borderRadius: '10px', background: '#e8eaf2', flexShrink: 0 }} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#1a1a18', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: pf }}>{share.songs?.title}</div>
-                  <div style={{ fontSize: '14px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '3px', fontFamily: pf, fontStyle: 'italic' }}>{share.songs?.artist}</div>
-                </div>
-                {share.songs?.spotify_url && (
-                  <a href={share.songs.spotify_url} target="_blank" style={{ width: '38px', height: '38px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#e8eaf2', textDecoration: 'none', fontSize: '13px', flexShrink: 0 }}>▶</a>
-                )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '0.5px solid #f0f0ee', paddingTop: '12px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: dark, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: '#e8eaf2', flexShrink: 0 }}>
-                  {share.users?.avatar_initials}
-                </div>
-                <a href={`/profile?u=${share.users?.username}`} style={{ fontSize: '14px', color: dark, textDecoration: 'none', fontWeight: 600 }}>{share.users?.display_name}</a>
-                {share.mood_note && <span style={{ fontSize: '13px', color: '#aaa', marginLeft: 'auto', fontFamily: pf, fontStyle: 'italic' }}>{share.mood_note}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </main>
   )
