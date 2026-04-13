@@ -34,6 +34,45 @@ export default function Share() {
 
     if (!songId) {
       const trackRes = await fetch(`/api/spotify?id=${spotifyId}`)
+      const track = awai
+
+cat > src/app/share/page.tsx << 'EOF'
+'use client'
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase'
+
+export default function Share() {
+  const [url, setUrl] = useState('')
+  const [mood, setMood] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
+  const supabase = createClient()
+
+  const pf = "'Playfair Display', serif"
+  const sans = "'DM Sans', sans-serif"
+  const dark = '#1e2235'
+
+  async function handleShare() {
+    setLoading(true)
+    setError('')
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { window.location.href = '/auth/login'; return }
+
+    const spotifyId = url.split('/track/')[1]?.split('?')[0]
+    if (!spotifyId) { setError('paste a spotify track link'); setLoading(false); return }
+
+    const { data: existingSong } = await supabase
+      .from('songs')
+      .select('id')
+      .eq('spotify_id', spotifyId)
+      .single()
+
+    let songId = existingSong?.id
+
+    if (!songId) {
+      const trackRes = await fetch(`/api/spotify?id=${spotifyId}`)
       const track = await trackRes.json()
 
       const { data: newSong, error: songError } = await supabase
@@ -53,11 +92,27 @@ export default function Share() {
       songId = newSong.id
     }
 
-    const { error: shareError } = await supabase
+    const { data: share, error: shareError } = await supabase
       .from('shares')
       .insert({ user_id: user.id, song_id: songId, mood_note: mood })
+      .select('id')
+      .single()
 
     if (shareError) { setError(shareError.message); setLoading(false); return }
+
+    if (mood && share?.id) {
+      try {
+        const embedRes = await fetch('/api/embed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: mood })
+        })
+        const { embedding } = await embedRes.json()
+        if (embedding) {
+          await supabase.from('shares').update({ embedding }).eq('id', share.id)
+        }
+      } catch {}
+    }
 
     setSuccess(true)
     setLoading(false)
