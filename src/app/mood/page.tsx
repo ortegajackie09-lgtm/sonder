@@ -8,6 +8,8 @@ export default function Mood() {
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportMsg, setExportMsg] = useState('')
   const supabase = createClient()
 
   const pf = "'Playfair Display', serif"
@@ -24,6 +26,7 @@ export default function Mood() {
     setLoading(true)
     setSearched(false)
     setAiSuggestions([])
+    setExportMsg('')
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { window.location.href = '/auth/login'; return }
@@ -64,7 +67,7 @@ export default function Mood() {
         .from('shares')
         .select(`
           id, mood_note, created_at,
-          songs ( title, artist, album_art_url, spotify_url ),
+          songs ( title, artist, album_art_url, spotify_url, spotify_id ),
           users ( display_name, avatar_initials, username )
         `)
         .in('user_id', followingIds)
@@ -81,7 +84,7 @@ export default function Mood() {
       .from('shares')
       .select(`
         id, mood_note, created_at,
-        songs ( title, artist, album_art_url, spotify_url ),
+        songs ( title, artist, album_art_url, spotify_url, spotify_id ),
         users ( display_name, avatar_initials, username )
       `)
       .in('id', shareIds)
@@ -98,6 +101,44 @@ export default function Mood() {
   async function handleSearch() {
     if (!query.trim()) return
     handleSearchWithQuery(query)
+  }
+
+  async function exportPlaylist() {
+    setExporting(true)
+    setExportMsg('')
+
+    const trackIds = [
+      ...results.map((s: any) => s.songs?.spotify_id).filter(Boolean),
+      ...aiSuggestions.map((s: any) => s.id).filter(Boolean)
+    ]
+
+    if (trackIds.length === 0) {
+      setExportMsg('no tracks to export')
+      setExporting(false)
+      return
+    }
+
+    const res = await fetch('/api/spotify/create-playlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trackIds, name: `sonder: ${query}` })
+    })
+
+    const data = await res.json()
+
+    if (data.error === 'not_connected') {
+      window.location.href = '/api/spotify/connect'
+      return
+    }
+
+    if (data.playlist_url) {
+      setExportMsg('playlist created!')
+      window.open(data.playlist_url, '_blank')
+    } else {
+      setExportMsg('something went wrong')
+    }
+
+    setExporting(false)
   }
 
   const songCard = (song: any, key: string) => (
@@ -118,6 +159,8 @@ export default function Mood() {
       </div>
     </div>
   )
+
+  const hasResults = results.length > 0 || aiSuggestions.length > 0
 
   return (
     <main style={{ fontFamily: sans, background: '#f0f0ee', minHeight: '100vh' }}>
@@ -144,9 +187,19 @@ export default function Mood() {
         </div>
 
         <button onClick={handleSearch} disabled={loading}
-          style={{ width: '100%', padding: '14px', background: dark, color: '#f0ebe4', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 600, marginBottom: '2rem' }}>
+          style={{ width: '100%', padding: '14px', background: dark, color: '#f0ebe4', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 600, marginBottom: '1rem' }}>
           {loading ? 'searching...' : 'find music'}
         </button>
+
+        {hasResults && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '2rem' }}>
+            <button onClick={exportPlaylist} disabled={exporting}
+              style={{ padding: '10px 20px', background: '#1DB954', color: '#fff', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600 }}>
+              {exporting ? 'creating...' : '↗ export to spotify'}
+            </button>
+            {exportMsg && <span style={{ fontSize: '13px', color: '#888', fontFamily: pf, fontStyle: 'italic' }}>{exportMsg}</span>}
+          </div>
+        )}
 
         {results.length > 0 && (
           <>
@@ -190,7 +243,7 @@ export default function Mood() {
           </>
         )}
 
-        {searched && results.length === 0 && aiSuggestions.length === 0 && (
+        {searched && !hasResults && (
           <div style={{ textAlign: 'center', padding: '3rem 0' }}>
             <p style={{ fontFamily: pf, fontStyle: 'italic', fontSize: '20px', color: '#aaa' }}>no matches yet</p>
             <p style={{ fontSize: '14px', color: '#bbb', marginTop: '8px' }}>share more songs with mood notes</p>
