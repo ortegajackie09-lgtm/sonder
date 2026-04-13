@@ -33,6 +33,9 @@ export default function Mood() {
 
     const followingIds = followData?.map(f => f.following_id) || []
 
+    console.log('user:', user.id)
+    console.log('followingIds:', followingIds)
+
     if (followingIds.length === 0) {
       setResults([])
       setLoading(false)
@@ -47,12 +50,16 @@ export default function Mood() {
     })
     const { embedding } = await embedRes.json()
 
-    const { data: matchedShares } = await supabase.rpc('match_shares', {
+    console.log('embedding length:', embedding?.length)
+
+    const { data: matchedShares, error: matchError } = await supabase.rpc('match_shares', {
       query_embedding: embedding,
       match_threshold: 0.3,
       match_count: 10,
       user_ids: followingIds
     })
+
+    console.log('matchedShares:', matchedShares, 'error:', matchError)
 
     if (!matchedShares || matchedShares.length === 0) {
       const { data: fallback } = await supabase
@@ -65,6 +72,7 @@ export default function Mood() {
         .in('user_id', followingIds)
         .ilike('mood_note', `%${q}%`)
         .limit(10)
+      console.log('fallback:', fallback)
       setResults(fallback || [])
       setLoading(false)
       setSearched(true)
