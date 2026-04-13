@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
       headers: { Authorization: `Bearer ${accessToken}` }
     })
     const me = await meRes.json()
-    if (!me.id) return NextResponse.json({ error: 'invalid token' }, { status: 401 })
+    console.log('Spotify me:', JSON.stringify(me).slice(0, 200))
+    if (!me.id) return NextResponse.json({ error: 'invalid token', me }, { status: 401 })
 
     const playlistRes = await fetch(`https://api.spotify.com/v1/users/${me.id}/playlists`, {
       method: 'POST',
@@ -22,12 +23,17 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ name: name || 'sonder mix', description: 'created with sonder', public: false })
     })
     const playlist = await playlistRes.json()
+    console.log('Playlist created:', JSON.stringify(playlist).slice(0, 200))
 
-    await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+    if (!playlist.id) return NextResponse.json({ error: 'playlist creation failed', playlist }, { status: 500 })
+
+    const addRes = await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ uris: trackIds.map((id: string) => `spotify:track:${id}`) })
     })
+    const addData = await addRes.json()
+    console.log('Tracks added:', JSON.stringify(addData).slice(0, 200))
 
     return NextResponse.json({ playlist_url: playlist.external_urls?.spotify, playlist_id: playlist.id })
   } catch (err: any) {
