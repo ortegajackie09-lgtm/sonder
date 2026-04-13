@@ -31,17 +31,7 @@ export default function Mood() {
       .select('following_id')
       .eq('follower_id', user.id)
 
-    const followingIds = followData?.map(f => f.following_id) || []
-
-    console.log('user:', user.id)
-    console.log('followingIds:', followingIds)
-
-    if (followingIds.length === 0) {
-      setResults([])
-      setLoading(false)
-      setSearched(true)
-      return
-    }
+    const followingIds = [...(followData?.map(f => f.following_id) || []), user.id]
 
     const embedRes = await fetch('/api/embed', {
       method: 'POST',
@@ -49,8 +39,6 @@ export default function Mood() {
       body: JSON.stringify({ text: q })
     })
     const { embedding } = await embedRes.json()
-
-    console.log('embedding length:', embedding?.length)
 
     const { data: matchedShares, error: matchError } = await supabase.rpc('match_shares', {
       query_embedding: embedding,
@@ -72,7 +60,6 @@ export default function Mood() {
         .in('user_id', followingIds)
         .ilike('mood_note', `%${q}%`)
         .limit(10)
-      console.log('fallback:', fallback)
       setResults(fallback || [])
       setLoading(false)
       setSearched(true)
