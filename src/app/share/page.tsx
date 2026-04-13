@@ -34,45 +34,6 @@ export default function Share() {
 
     if (!songId) {
       const trackRes = await fetch(`/api/spotify?id=${spotifyId}`)
-      const track = awai
-
-cat > src/app/share/page.tsx << 'EOF'
-'use client'
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
-
-export default function Share() {
-  const [url, setUrl] = useState('')
-  const [mood, setMood] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
-  const supabase = createClient()
-
-  const pf = "'Playfair Display', serif"
-  const sans = "'DM Sans', sans-serif"
-  const dark = '#1e2235'
-
-  async function handleShare() {
-    setLoading(true)
-    setError('')
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/auth/login'; return }
-
-    const spotifyId = url.split('/track/')[1]?.split('?')[0]
-    if (!spotifyId) { setError('paste a spotify track link'); setLoading(false); return }
-
-    const { data: existingSong } = await supabase
-      .from('songs')
-      .select('id')
-      .eq('spotify_id', spotifyId)
-      .single()
-
-    let songId = existingSong?.id
-
-    if (!songId) {
-      const trackRes = await fetch(`/api/spotify?id=${spotifyId}`)
       const track = await trackRes.json()
 
       const { data: newSong, error: songError } = await supabase
